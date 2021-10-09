@@ -1,0 +1,27 @@
+name: Load Docker Image
+description: Loads a Docker image that was saved by a previous job as a workflow artifact.
+
+inputs:
+  artifact-name:
+    description: Name of the uploaded artifact containing the image.
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download
+      id: download
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ runner.temp }}
+
+    - name: Load
+      run: |
+        echo ${{ steps.download.outputs.download-path }}
+        cd ${{ steps.download.outputs.download-path }}
+        ls -la
+        docker load --input "${{ steps.download.outputs.download-path }}"
+        docker image ls -a
+      shell: sh

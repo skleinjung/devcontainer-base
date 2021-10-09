@@ -9,6 +9,14 @@ jobs:
   build:
     name: Build
     uses: 'skleinjung/devcontainers/.github/workflows/build-and-validate-image.yml@semver-test-branch'
-    secrets:
-      password: '${{ secrets.GITHUB_TOKEN }}'
-      username: '${{ github.actor }}'
+
+  test-load:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - uses: ./.github/actions/load-docker-image
+        with:
+          artifact-name: image 
