@@ -1,0 +1,14 @@
+name: Validate Pull Request
+on:
+  pull_request: 
+    paths:
+      - .github/**
+      - container/**
+
+jobs:
+  build:
+    name: Build
+    uses: 'skleinjung/devcontainers/.github/workflows/build-and-validate-image.yml@semver-test-branch'
+    secrets:
+      password: '${{ secrets.GITHUB_TOKEN }}'
+      username: '${{ github.actor }}'
