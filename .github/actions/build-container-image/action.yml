@@ -1,14 +1,15 @@
 name: Build Container Image
-description: Builds a container image using Docker
+description: Opinionated container image build.
 
 inputs:
+  artifact:
+    description: Name of the artifact to upload the image as.
+    default: image
+    required: false
   context:
     description: Context to use for building the container image.
     default: .
     required: false
-  image-name:
-    description: Name of the container image to build.
-    required: true
   password:
     description: Password for image registry authentication.
     required: true
@@ -16,6 +17,9 @@ inputs:
     default: ghcr.io
     description: Container image registry.
     required: false
+  repository:
+    description: Name of the image repository.
+    required: true
   username:
     description: Username for image registry authentication.
     required: true
@@ -45,7 +49,7 @@ runs:
       id: meta
       uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
       with:
-        images: ${{ inputs.registry}}/${{ inputs.image-name }}
+        images: ${{ inputs.registry}}/${{ inputs.repository }}
         tags: |
           type=edge,branch=main
           type=ref,event=branch
@@ -63,4 +67,23 @@ runs:
         context: ${{ inputs.context }}
         labels: ${{ steps.meta.outputs.labels }}
         load: true
+        outputs: type=docker,dest=${{ runner.temp }}/image.tar
         tags: ${{ steps.meta.outputs.tags }}
+
+    - name: Store metadata
+      env:
+        METADATA: ${{ steps.meta.outputs.json }}
+      run: |
+        echo "${METADATA}" > "${{ runner.temp }}/metadata.json"
+      shell: bash
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        if-no-files-found: error
+        name: ${{ inputs.artifact }}
+        path: |
+          ${{ runner.temp }}/image.tar
+          ${{ runner.temp }}/metadata.json
+        retention-days: 1
+        

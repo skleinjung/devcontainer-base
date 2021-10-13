@@ -2,25 +2,18 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
-    paths:
-      - .github/**
-      - container/**
-      - Dockerfile
-      - .dockerignore
+  workflow_call:
 
 env:
   IMAGE_REGISTRY: ghcr.io
   IMAGE_REPOSITORY: ${{ github.repository }}
 
 jobs:
-  build-image:
+  build:
     name: Build Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
@@ -28,22 +21,27 @@ jobs:
         name: Calculate version
         uses: ./.github/actions/git-version-provider
 
-      - id: build-image
-        name: Build Image
+      - name: Build Image
         uses: ./.github/actions/build-container-image
         with:
-          image-name: ${{ github.repository }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ${{ env.IMAGE_REGISTRY }}
+          repository: ${{ github.repository }}
           username: ${{ github.actor }}
           version: ${{ steps.semver.outputs.version }}
 
+  validate:
+    name: Validate Image
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+          
+      - id: load-image
+        name: Load image
+        uses: ./.github/actions/load-container-image
+
       - name: Validate image
         run: |
-          docker image inspect "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${{ github.sha }}"
-          docker run --rm --entrypoint /bin/bash "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${{ github.sha }}" -c "$(cat tests.sh)"
-
-      - name: Push image
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          docker push --all-tags "${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}""
+          docker image inspect "${{ steps.load-image.outputs.tag }}"
+          docker run --rm --entrypoint /bin/bash "${{ steps.load-image.outputs.tag }}" -c "$(cat tests.sh)"
