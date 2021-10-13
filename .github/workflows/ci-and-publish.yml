@@ -9,8 +9,8 @@ jobs:
     name: CI
     uses: skleinjung/devcontainers/.github/workflows/ci.yml@main
     
-  release:
-    name: Create Release
+  publish:
+    name: Publish Image
     needs: [ci]
     runs-on: ubuntu-latest
     steps:

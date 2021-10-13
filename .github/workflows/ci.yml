@@ -33,4 +33,4 @@ jobs:
       - name: Validate image
         run: |
           docker image inspect "${{ steps.load-image.outputs.tag }}"
-          docker run --rm --entrypoint /bin/bash "${{ steps.load-image.outputs.tag }}" -c "$(cat tests.sh)"
+          docker run --rm --entrypoint /bin/bash "${{ steps.load-image.outputs.tag }}" -c "$(cat container/tests.sh)"
