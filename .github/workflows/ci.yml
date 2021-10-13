@@ -8,6 +8,7 @@ on:
       - .github/**
       - container/**
       - Dockerfile
+      - .dockerignore
 
 env:
   IMAGE_REGISTRY: ghcr.io
