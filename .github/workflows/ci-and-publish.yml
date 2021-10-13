@@ -4,10 +4,6 @@ on:
   push:
     branches: [main]
 
-env:
-  CONTAINER_IMAGE: ghcr.io/${{ inputs.image-name }}
-  REGISTRY: ghcr.io
-
 jobs:
   ci:
     name: CI
@@ -19,6 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - id: semver
+        name: Calculate version
+        uses: ./.github/actions/git-version-provider
+
+      - id: tag-repository
+        name: Tag repository
+        run: |
+          git tag "${{ steps.semver.outputs.version }}"
+          git push origin "${{ steps.semver.outputs.version }}"
           
       - id: load-image
         name: Load image
@@ -31,6 +39,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image
+      - name: Tag and push image
         run: |
+          docker tag \
+            "${{ steps.load-image.outputs.tag }}" \
+            "${{ steps.load-image.outputs.repository }}:${{ steps.semver.outputs.version }}"
           docker push --all-tags "${{ steps.load-image.outputs.repository }}"
