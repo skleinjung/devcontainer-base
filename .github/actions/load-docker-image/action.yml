@@ -5,7 +5,6 @@ inputs:
   artifact-name:
     description: Name of the uploaded artifact containing the image.
     required: true
-    type: string
 
 runs:
   using: "composite"

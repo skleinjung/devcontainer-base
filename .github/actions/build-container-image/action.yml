@@ -1,0 +1,61 @@
+name: Build Container Image
+description: Builds a container image using Docker
+
+inputs:
+  image-name:
+    description: Name of the container image to build.
+    required: true
+  password:
+    description: Password for image registry authentication.
+    required: true
+  registry:
+    description: Container image registry.
+    required: true
+  username:
+    description: Username for image registry authentication.
+    required: true
+  version:
+    description: Semantic version for the new image.
+    required: true
+
+outputs:
+  digest:
+    description: Image content-addressable identifier also called a digest.
+    value: ${{ steps.build.outputs.digest }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to ghcr.io
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+
+    - name: Calculate image metadata
+      id: meta
+      uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+      with:
+        images: ${{ inputs.registry}}/${{ inputs.image-name }}
+        tags: |
+          type=edge,branch=main
+          type=ref,event=branch
+          type=ref,event=tag
+          type=schedule
+          type=sha,format=long,prefix=
+          type=semver,pattern={{version}},value=v${{ inputs.version }}
+          type=semver,pattern={{major}}.{{minor}},value=v${{ inputs.version }}
+          type=semver,pattern={{major}},value=v${{ inputs.version }}
+      
+    - name: Build image
+      id: build
+      uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      with:
+        context: ./container
+        labels: ${{ steps.meta.outputs.labels }}
+        load: true
+        tags: ${{ steps.meta.outputs.tags }}

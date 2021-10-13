@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - .github/**
+      - container/**
+
+env:
+  CONTAINER_IMAGE: ghcr.io/${{ github.repository }}
+  REGISTRY: ghcr.io
+
+jobs:
+  build-image:
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - id: semver
+        name: Calculate version
+        uses: ./.github/actions/git-version-provider
+
+      - id: build-image
+        name: Build Image
+        uses: ./.github/actions/build-container-image
+        with:
+          image-name: ${{ github.repository }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          version: ${{ steps.semver.outputs.version }}
+
+      - name: Validate image
+        run: |
+          # docker image inspect "${CONTAINER_IMAGE}:${{ github.sha }}"
+          docker image inspect "${CONTAINER_IMAGE}@${{ steps.build-image.outputs.digest }}"
+          docker run --rm --entrypoint /bin/bash "${CONTAINER_IMAGE}:${{ github.sha }}" -c "$(cat tests.sh)"
+
+      - name: Push image
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/build-push-action@v2
+        with:
+          context: ./container
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
