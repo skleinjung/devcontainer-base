@@ -4,22 +4,20 @@ on:
   push:
     branches: [main]
 
-env:
-  CONTAINER_IMAGE: ghcr.io/${{ inputs.image-name }}
-  REGISTRY: ghcr.io
-
 jobs:
   ci:
     name: CI
     uses: skleinjung/devcontainers/.github/workflows/ci.yml@main
     
-  publish:
-    name: Publish Image
+  release:
+    name: Create Release
     needs: [ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-          
+        with:
+          fetch-depth: 0
+
       - id: load-image
         name: Load image
         uses: ./.github/actions/load-container-image
@@ -31,6 +29,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push image
+      - id: release
+        name: Create release
+        uses: ./.github/actions/create-release
+
+      - name: Tag and push image
         run: |
+          docker tag \
+            "${{ steps.load-image.outputs.tag }}" \
+            "${{ steps.load-image.outputs.repository }}:${{ steps.release.outputs.version }}"
+          docker tag \
+            "${{ steps.load-image.outputs.tag }}" \
+            "${{ steps.load-image.outputs.repository }}:latest"
           docker push --all-tags "${{ steps.load-image.outputs.repository }}"
+        shell: bash

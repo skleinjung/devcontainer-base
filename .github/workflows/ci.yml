@@ -4,31 +4,20 @@ on:
   pull_request:
   workflow_call:
 
-env:
-  IMAGE_REGISTRY: ghcr.io
-  IMAGE_REPOSITORY: ${{ github.repository }}
-
 jobs:
   build:
     name: Build Image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - id: semver
-        name: Calculate version
-        uses: ./.github/actions/git-version-provider
 
       - name: Build Image
         uses: ./.github/actions/build-container-image
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ${{ env.IMAGE_REGISTRY }}
+          registry: ghcr.io
           repository: ${{ github.repository }}
           username: ${{ github.actor }}
-          version: ${{ steps.semver.outputs.version }}
 
   validate:
     name: Validate Image

@@ -23,9 +23,6 @@ inputs:
   username:
     description: Username for image registry authentication.
     required: true
-  version:
-    description: Semantic version for the new image.
-    required: true
 
 outputs:
   digest:
@@ -56,9 +53,6 @@ runs:
           type=ref,event=tag
           type=schedule
           type=sha,format=long,prefix=
-          type=semver,pattern={{version}},value=v${{ inputs.version }}
-          type=semver,pattern={{major}}.{{minor}},value=v${{ inputs.version }}
-          type=semver,pattern={{major}},value=v${{ inputs.version }}
       
     - name: Build image
       id: build
