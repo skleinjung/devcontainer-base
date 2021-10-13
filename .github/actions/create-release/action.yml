@@ -15,15 +15,15 @@ runs:
 
     - name: Tag repository
       run: |
-        git tag "${{ steps.semver.outputs.version }}"
-        git push origin "${{ steps.semver.outputs.version }}"
+        git tag "v${{ steps.semver.outputs.version }}"
+        git push origin "v${{ steps.semver.outputs.version }}"
       shell: bash
   
     - name: Generate changelog
       id: changelog
       uses: metcalfc/changelog-generator@v1.0.0
       with:
-        myToken: ${{ runner.token }}
+        myToken: ${{ github.token }}
  
     - name: Create release
       uses: softprops/action-gh-release@v1
