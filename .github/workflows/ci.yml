@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build Image
-        uses: ./.github/actions/build-container-image
+        uses: twin-digital/action-build-container-image@v1
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -28,7 +28,7 @@ jobs:
           
       - id: load-image
         name: Load image
-        uses: ./.github/actions/load-container-image
+        uses: twin-digital/action-load-container-image@v1
 
       - name: Validate image
         run: |

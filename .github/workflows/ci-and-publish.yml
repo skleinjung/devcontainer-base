@@ -20,7 +20,7 @@ jobs:
 
       - id: load-image
         name: Load image
-        uses: ./.github/actions/load-container-image
+        uses: twin-digital/action-load-container-image@v1
 
       - name: Login to ghcr.io
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -31,7 +31,7 @@ jobs:
 
       - id: release
         name: Create release
-        uses: ./.github/actions/create-release
+        uses: twin-digital/action-create-release@v1
 
       - name: Tag and push image
         run: |
