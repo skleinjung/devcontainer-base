@@ -1,17 +1,16 @@
 name: Publish
 
 on:
-  push:
+  workflow_run:
     branches: [main]
+    workflows: ["CI"]
+    types:
+      - completed
 
 jobs:
-  ci:
-    name: CI
-    uses: skleinjung/devcontainers/.github/workflows/ci.yml@main
-    
   publish:
+    if: github.event.workflow_run.conclusion == 'success'
     name: Publish Image
-    needs: [ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,7 +19,10 @@ jobs:
 
       - id: load-image
         name: Load image
-        uses: twin-digital/action-load-container-image@v1
+        uses: twin-digital/action-load-container-image-from-workflow@v1
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          workflow: 'ci.yml'
 
       - name: Login to ghcr.io
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
